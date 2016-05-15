@@ -32,8 +32,8 @@ def indexUser(user):
     res = es.index(index="scratch", doc_type='user', id=user['id'], body=userdoc)
     if res['created']:
         print(bcolors.OKBLUE + "Indexed "+user['username'])
+        usersindexed += 1
 
-    es.indices.refresh(index="scratch")
 
 
 def GetFollowers(username, page=0):
@@ -53,7 +53,6 @@ def IndexFollowers(username):
     while followers:
         for follower in followers:
             indexUser(follower)
-            usersindexed += 1
         page += 1
         followers = GetFollowers(username, page)
 
@@ -71,4 +70,4 @@ while True:
         usersindexed = 0
         starttime = time.time()
         IndexFollowers(hit["_source"]['username'])
-        print(bcolors.ENDC + "Users undexed per second: "+str(usersindexed/(time.time()-starttime)))
+        print(bcolors.ENDC + "Users indexed per second: "+str(usersindexed/(time.time()-starttime)))
