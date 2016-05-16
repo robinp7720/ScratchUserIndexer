@@ -8,6 +8,7 @@ es = Elasticsearch()
 starttime = time.time()
 
 usersindexed = 0
+starttime = time.time()
 
 class bcolors:
     HEADER = '\033[95m'
@@ -37,12 +38,20 @@ def indexUser(user):
 
 
 def GetFollowers(username, page=0):
-    print(bcolors.OKGREEN + "Retrieving followers list page " + str(page) + " for user "+ username)
-    r = requests.get('https://api.scratch.mit.edu/users/{0}/following?offset={1}'.format(username, page * 20))
-    while r.status_code != 200:
+    print(bcolors.OKGREEN + "Retrieving followers list page " + str(page) + " for user " + username)
+    try:
+        r = requests.get('https://api.scratch.mit.edu/users/{0}/following?offset={1}'.format(username, page * 20))
+        status = r.status_code
+    except:
+        print(bcolors.HEADER + "Rate limited!")
+        time.sleep(0.1)
+        status = 0
+
+    while status != 200:
         print(bcolors.HEADER + "Rate limited!")
         time.sleep(0.1)
         r = requests.get('https://api.scratch.mit.edu/users/{0}/following?offset={1}'.format(username, page * 20))
+        status = r.status_code
     followers = r.json()
     return followers
 
@@ -67,7 +76,6 @@ while True:
             }
         }
         es.update(index="scratch", doc_type='user', id=hit["_id"], body=doc)
-        usersindexed = 0
-        starttime = time.time()
         IndexFollowers(hit["_source"]['username'])
         print(bcolors.ENDC + "Users indexed per second: "+str(usersindexed/(time.time()-starttime)))
+        time.sleep(0.065)
